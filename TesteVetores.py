@@ -1,4 +1,4 @@
-from InstanciaVT1 import *
+from Instancia import *
 import copy
 
 Personagens = [Instancia() for x in range(100)]

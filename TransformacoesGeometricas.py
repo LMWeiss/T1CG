@@ -28,6 +28,10 @@ from ListaDeCoresRGB import *
 from datetime import datetime
 import time
 import random
+from dotenv import load_dotenv
+
+import os
+os.environ['PATH'] += 'C:\MinGW\bin'
 
 # ***********************************************************************************
 
@@ -346,7 +350,7 @@ def keyboard(*args):
 # **********************************************************************
 def arrow_keys(a_keys: int, x: int, y: int):
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        pass
+        Personagens[0].AtualizaPosicao(1)
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
         pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
@@ -394,13 +398,13 @@ def CarregaModelos():
     Mastro.LePontosDeArquivo("Mastro.txt")
 
     Modelos.append(ModeloMatricial())
-    Modelos[0].leModelo("MatrizExemplo0.txt");
+    Modelos[0].leModelo("MatrizExemplo0.txt")
     Modelos.append(ModeloMatricial())
-    Modelos[1].leModelo("MatrizProjetil.txt");
+    Modelos[1].leModelo("MatrizProjetil.txt")
 
-    print ("Modelo 0");
+    print ("Modelo 0")
     Modelos[0].Imprime()
-    print ("Modelo 1");
+    print ("Modelo 1")
     Modelos[1].Imprime()
 
 
@@ -469,7 +473,7 @@ def CriaInstancias():
     Personagens[i].Pivot = Ponto(2.5,0)
     Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
     Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
-    Personagens[i].Velocidade = 3 # move-se a 5 m/s
+    Personagens[i].Velocidade = 1 # move-se a 5 m/s
 
     # Salva os dados iniciais do personagem i na area de backup
     Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i]) 
@@ -495,16 +499,20 @@ def CriaInstancias():
 
 # ***********************************************************************************
 def init():
+    load_dotenv()
     global Min, Max
     global TempoInicial, LarguraDoUniverso
     # Define a cor do fundo da tela (AZUL)
-    glClearColor(0, 0, 1, 1)
+    background_color_str = os.getenv('BACKGROUND_COLOR')
+    background_color = tuple(map(float, background_color_str.split(',')))
+    glClearColor(*background_color)
     
     clear() # limpa o console
     CarregaModelos()
     CriaInstancias()
 
-    LarguraDoUniverso = 20
+    LarguraDoUniverso = int(os.getenv('TAMANHO_TELA'))
+
     Min = Ponto(-LarguraDoUniverso,-LarguraDoUniverso)
     Max = Ponto(LarguraDoUniverso,LarguraDoUniverso)
 
