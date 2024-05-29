@@ -29,9 +29,6 @@ from datetime import datetime
 import time
 import random
 
-import os
-os.environ['PATH'] += 'C:\MinGW\bin'
-
 # ***********************************************************************************
 
 # Modelos de Objetos
@@ -397,13 +394,13 @@ def CarregaModelos():
     Mastro.LePontosDeArquivo("Mastro.txt")
 
     Modelos.append(ModeloMatricial())
-    Modelos[0].leModelo("MatrizExemplo0.txt")
+    Modelos[0].leModelo("MatrizExemplo0.txt");
     Modelos.append(ModeloMatricial())
-    Modelos[1].leModelo("MatrizProjetil.txt")
+    Modelos[1].leModelo("MatrizProjetil.txt");
 
-    print ("Modelo 0")
+    print ("Modelo 0");
     Modelos[0].Imprime()
-    print ("Modelo 1")
+    print ("Modelo 1");
     Modelos[1].Imprime()
 
 

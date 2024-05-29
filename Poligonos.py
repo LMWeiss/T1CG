@@ -75,8 +75,7 @@ class Polygon:
     def LePontosDeArquivo(self, Nome):
         
         Pt = Ponto()
-        full_path = os.path.join('C:/Users/Lucas Weiss/OneDrive/Área de Trabalho/PythonCG/TransformacoesGeometricas', Nome)
-        infile = open(full_path)
+        infile = open(Nome)
         line = infile.readline()
         number = int(line)
         for line in infile:
