@@ -233,10 +233,7 @@ def AtualizaEnvelope(i):
     #     D.imprime("D:");
     #     print("");
 
-    Personagens[i].Envelope[0] = A
-    Personagens[i].Envelope[1] = B
-    Personagens[i].Envelope[2] = C
-    Personagens[i].Envelope[3] = D
+    Personagens[i].Envelope = [A, B, C, D]
 
 # ***********************************************************************************
 # Gera sempre uma posicao na metade de baixo da tela
@@ -470,7 +467,7 @@ def CriaInstancias():
     Personagens[i].Rotacao = ang
     Personagens[i].IdDoModelo = 0
     Personagens[i].Modelo = DesenhaPersonagemMatricial
-    Personagens[i].Pivot = Ponto(2.5,0)
+    Personagens[i].Pivot = Ponto(8,0)
     Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
     Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
     Personagens[i].Velocidade = 1 # move-se a 5 m/s
@@ -532,7 +529,7 @@ def animate():
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA)
 # Define o tamanho inicial da janela grafica do programa
-glutInitWindowSize(500, 500)
+glutInitWindowSize(1000, 1000)
 glutInitWindowPosition(100, 100)
 wind = glutCreateWindow("Exemplo de Criacao de Instancias")
 glutDisplayFunc(display)
