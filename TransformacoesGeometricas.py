@@ -199,6 +199,27 @@ def TestaColisao(P1, P2) -> bool :
                 return True
     return False
 
+def colideLimite(P1, size):
+    for i in range(4):
+        x = Personagens[P1].Envelope[i].getX()
+        y = Personagens[P1].Envelope[i].getY()
+        if x < -size:
+            Personagens[P1].Posicao = Ponto(size - 10, y)
+            return True
+        elif x > size:
+            Personagens[P1].Posicao = Ponto(-size + 5, y)
+            return True
+        elif y < -size:
+            Personagens[P1].Posicao = Ponto(x, size - 5)
+            return True
+        elif y > size:
+            Personagens[P1].Posicao = Ponto(x, -size + 5)
+            return True
+    return False
+            
+
+
+
 
 # ***********************************************************************************
 def AtualizaEnvelope(i):
@@ -264,6 +285,8 @@ def AtualizaJogo():
 
     # Feito o calculo, eh preciso testar todos os tiros e
     # demais personagens contra o jogador
+    colideLimite(0, LarguraDoUniverso)
+            
     for i in range (1, nInstancias):
         if TestaColisao(0, i):
             # neste exemplo, a posicao do tiro é gerada aleatoriamente apos a colisao
@@ -275,8 +298,9 @@ def AtualizaJogo():
             Personagens[i].Direcao = Ponto(0,1)
             Personagens[i].Direcao.rotacionaZ(ang)
             print ("Nova Orientacao: ", ang)
+        
+        
 
-       
         else:
             pass
             # print ("SEM Colisao")
@@ -461,6 +485,7 @@ def DesenhaPersonagemMatricial():
 # ***********************************************************************************
 # Esta função deve instanciar todos os personagens do cenário
 # ***********************************************************************************
+bulletN = 1
 
 bulletN = 1
 reload_start_time = 0
@@ -496,7 +521,7 @@ def CriaInstancias():
     Personagens[i].Pivot = Ponto(8,0)
     Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
     Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
-    Personagens[i].Velocidade = 1 # move-se a 5 m/s
+    Personagens[i].Velocidade = 50 # move-se a 5 m/s
 
     # Salva os dados iniciais do personagem i na area de backup
     Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i]) 
