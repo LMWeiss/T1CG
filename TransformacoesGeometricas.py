@@ -40,6 +40,7 @@ MeiaSeta = Polygon()
 Mastro = Polygon()
 
 # Limites da Janela de Seleção
+
 Min = Ponto()
 Max = Ponto()
 
@@ -396,6 +397,12 @@ def CarregaModelos():
     Modelos[0].leModelo("MatrizExemplo0.txt")
     Modelos.append(ModeloMatricial())
     Modelos[1].leModelo("MatrizProjetil.txt")
+    Modelos.append(ModeloMatricial())
+    Modelos[2].leModelo("inimigo1.txt")
+    Modelos.append(ModeloMatricial())
+    Modelos[3].leModelo("inimigo2.txt")
+    Modelos.append(ModeloMatricial())
+    Modelos[4].leModelo("inimigo3.txt")
 
     print ("Modelo 0")
     Modelos[0].Imprime()
@@ -455,16 +462,24 @@ def DesenhaPersonagemMatricial():
 # Esta função deve instanciar todos os personagens do cenário
 # ***********************************************************************************
 
+bulletN = 1
+reload_start_time = 0
+is_reloading = False
+
 def shoot_bullet():
-    ang = 90
-    Personagens[1].Posicao = Personagens[0].PosicaoDoPersonagem + Ponto(Modelos[Personagens[0].IdDoModelo].nColunas * Personagens[0].Direcao.x , Modelos[Personagens[0].IdDoModelo].nLinhas * Personagens[0].Direcao.y)
-    Personagens[1].Escala = Ponto (1,1)
-    Personagens[1].Rotacao = copy.deepcopy(Personagens[0].Rotacao)
-    Personagens[1].IdDoModelo = 1
-    Personagens[1].Modelo = DesenhaPersonagemMatricial
-    Personagens[1].Pivot = Ponto(0.5,0)
-    Personagens[1].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
-    Personagens[1].Velocidade = 1   # move-se a 3 m/s
+    global bulletN
+    Personagens[bulletN].Posicao = Personagens[0].Posicao + (Personagens[0].Direcao * (Modelos[Personagens[0].IdDoModelo].nLinhas+0.1)) + Personagens[0].Pivot - Ponto(0.5,0)
+    Personagens[bulletN].Escala = Ponto (1,1)
+    Personagens[bulletN].Rotacao = copy.deepcopy(Personagens[0].Rotacao)
+    Personagens[bulletN].IdDoModelo = 1
+    Personagens[bulletN].Modelo = DesenhaPersonagemMatricial
+    Personagens[bulletN].Pivot = Ponto(0.5,0)
+    Personagens[bulletN].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
+    Personagens[bulletN].Velocidade = 60   # move-se a 3 m/s
+    if bulletN > 20:
+        bulletN = 1
+    else:
+        bulletN+=1
     
 
 def CriaInstancias():
@@ -486,11 +501,52 @@ def CriaInstancias():
     # Salva os dados iniciais do personagem i na area de backup
     Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i]) 
 
-    i = i + 1
+    i = 20
 
-    # Salva os dados iniciais do personagem i na area de backup
-    Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i]) 
-    nInstancias = i+1
+    while i < 25:
+        i+=1
+        Personagens[i].Posicao = GeraPosicaoAleatoria()
+        Personagens[i].Escala = Ponto (1,1)
+        Personagens[i].Rotacao = ang
+        Personagens[i].IdDoModelo = 2
+        Personagens[i].Modelo = DesenhaPersonagemMatricial
+        Personagens[i].Pivot = Ponto(8,0)
+        Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
+        Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
+        Personagens[i].Velocidade = 1 # move-se a 5 m/s 
+
+        Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
+
+    while i < 30:
+        i+=1
+        Personagens[i].Posicao = GeraPosicaoAleatoria()
+        Personagens[i].Escala = Ponto (1,1)
+        Personagens[i].Rotacao = ang
+        Personagens[i].IdDoModelo = 3
+        Personagens[i].Modelo = DesenhaPersonagemMatricial
+        Personagens[i].Pivot = Ponto(8,0)
+        Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
+        Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
+        Personagens[i].Velocidade = 1 # move-se a 5 m/s 
+
+        Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
+
+    while i < 35:
+        i+=1
+        Personagens[i].Posicao = GeraPosicaoAleatoria()
+        Personagens[i].Escala = Ponto (1,1)
+        Personagens[i].Rotacao = ang
+        Personagens[i].IdDoModelo = 4
+        Personagens[i].Modelo = DesenhaPersonagemMatricial
+        Personagens[i].Pivot = Ponto(8,0)
+        Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
+        Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
+        Personagens[i].Velocidade = 1 # move-se a 5 m/s 
+
+        Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
+
+
+    nInstancias = 36
 
 
 # ***********************************************************************************
@@ -498,6 +554,7 @@ def init():
     load_dotenv()
     global Min, Max
     global TempoInicial, LarguraDoUniverso
+    
     # Define a cor do fundo da tela (AZUL)
     background_color_str = os.getenv('BACKGROUND_COLOR')
     background_color = tuple(map(float, background_color_str.split(',')))
