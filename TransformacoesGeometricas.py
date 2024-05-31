@@ -172,30 +172,19 @@ def DesenhaEixos():
     glEnd()
 
 # ***********************************************************************************
-def TestaColisao(P1, P2) -> bool :
+def TestaColisao(P1, P2) -> bool:
+    # existing collision testing code...
 
-    # cout << "\n-----\n" << endl;
-    # Personagens[Objeto1].ImprimeEnvelope("Envelope 1: ", "\n");
-    # Personagens[Objeto2].ImprimeEnvelope("\nEnvelope 2: ", "\n");
-    # cout << endl;
-
-    # Testa todas as arestas do envelope de
-    # um objeto contra as arestas do outro
-       
     for i in range(4):
         A = Personagens[P1].Envelope[i]
-        B = Personagens[P1].Envelope[(i+1)%4]
+        B = Personagens[P1].Envelope[(i + 1) % 4]
         for j in range(4):
-            # print ("Testando ", i," contra ",j)
-            # Personagens[Objeto1].ImprimeEnvelope("\nEnvelope 1: ", "\n");
-            # Personagens[Objeto2].ImprimeEnvelope("Envelope 2: ", "\n");
             C = Personagens[P2].Envelope[j]
-            D = Personagens[P2].Envelope[(j+1)%4]
-            # A.imprime("A:","\n");
-            # B.imprime("B:","\n");
-            # C.imprime("C:","\n");
-            # D.imprime("D:","\n\n");    
+            D = Personagens[P2].Envelope[(j + 1) % 4]
             if HaInterseccao(A, B, C, D):
+                if P2 > 20:  # Assuming enemies are indexed starting from 21
+                    global enemies_killed
+                    enemies_killed += 1
                 return True
     return False
 
@@ -204,21 +193,18 @@ def colideLimite(P1, size):
         x = Personagens[P1].Envelope[i].getX()
         y = Personagens[P1].Envelope[i].getY()
         if x < -size:
-            Personagens[P1].Posicao = Ponto(size - 10, y)
+            Personagens[P1].Posicao = Ponto(size - 12, y)
             return True
         elif x > size:
-            Personagens[P1].Posicao = Ponto(-size + 5, y)
+            Personagens[P1].Posicao = Ponto(-size + 12, y)
             return True
         elif y < -size:
-            Personagens[P1].Posicao = Ponto(x, size - 5)
+            Personagens[P1].Posicao = Ponto(x, size - 12)
             return True
         elif y > size:
-            Personagens[P1].Posicao = Ponto(x, -size + 5)
+            Personagens[P1].Posicao = Ponto(x, -size + 12)
             return True
     return False
-            
-
-
 
 
 # ***********************************************************************************
@@ -260,9 +246,10 @@ def AtualizaEnvelope(i):
 # ***********************************************************************************
 # Gera sempre uma posicao na metade de baixo da tela
 def GeraPosicaoAleatoria():
-        x = random.randint(-LarguraDoUniverso, LarguraDoUniverso)
-        y = random.randint(-LarguraDoUniverso, 0)
-        return Ponto (x,y)
+    x = random.randint(-LarguraDoUniverso, LarguraDoUniverso)
+    y = random.randint(-LarguraDoUniverso, LarguraDoUniverso)
+    return Ponto(x, y)
+
 
 
 # ***********************************************************************************
@@ -285,8 +272,11 @@ def AtualizaJogo():
 
     # Feito o calculo, eh preciso testar todos os tiros e
     # demais personagens contra o jogador
-    colideLimite(0, LarguraDoUniverso)
-            
+
+    for i in range(nInstancias):
+        if Personagens[i].IdDoModelo != 1:
+            colideLimite(i, LarguraDoUniverso)
+
     for i in range (1, nInstancias):
         if TestaColisao(0, i):
             # neste exemplo, a posicao do tiro é gerada aleatoriamente apos a colisao
@@ -297,9 +287,7 @@ def AtualizaJogo():
             Personagens[i].Rotacao = ang
             Personagens[i].Direcao = Ponto(0,1)
             Personagens[i].Direcao.rotacionaZ(ang)
-            print ("Nova Orientacao: ", ang)
-        
-        
+            print ("Nova Orientacao: ", ang)        
 
         else:
             pass
@@ -324,28 +312,30 @@ def DesenhaPersonagens():
         
 # ***********************************************************************************
 def display():
-
     global TempoInicial, TempoTotal, TempoAnterior
 
     TempoAtual = time.time()
-
-    TempoTotal =  TempoAtual - TempoInicial
-
+    TempoTotal = TempoAtual - TempoInicial
     DiferencaDeTempo = TempoAtual - TempoAnterior
 
-	# Limpa a tela coma cor de fundo
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
-    #glLineWidth(3)
-    glColor3f(1,1,1) # R, G, B  [0..1]
-    #DesenhaEixos()
+    glColor3f(1, 1, 1)  # R, G, B [0..1]
 
     DesenhaPersonagens()
     AtualizaPersonagens(DiferencaDeTempo)
-    
+    enemy_shoot()
+
+    # Render the enemies killed counter
+    glPushMatrix()
+    glLoadIdentity()
+    glColor3f(1, 0, 0)  # Red color for the counter
+    drawText((-100, 100), f'Enemies killed: {enemies_killed}')
+    glPopMatrix()
+
     glutSwapBuffers()
     TempoAnterior = TempoAtual
 
@@ -501,14 +491,14 @@ def shoot_bullet():
     Personagens[bulletN].Pivot = Ponto(0.5,0)
     Personagens[bulletN].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
     Personagens[bulletN].Velocidade = 60   # move-se a 3 m/s
-    if bulletN > 20:
+    if bulletN > 10:
         bulletN = 1
     else:
         bulletN+=1
     
 
 def CriaInstancias():
-    global Personagens, nInstancias
+    global Personagens, nInstancias, enemy_shoot_intervals, enemy_last_shot_time
 
     i = 0
     ang = -90.0
@@ -518,7 +508,7 @@ def CriaInstancias():
     Personagens[i].Rotacao = ang
     Personagens[i].IdDoModelo = 0
     Personagens[i].Modelo = DesenhaPersonagemMatricial
-    Personagens[i].Pivot = Ponto(8,0)
+    Personagens[i].Pivot = Ponto(6,0)
     Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
     Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
     Personagens[i].Velocidade = 50 # move-se a 5 m/s
@@ -528,7 +518,7 @@ def CriaInstancias():
 
     i = 20
 
-    while i < 25:
+    while i < 20 + int(os.getenv('N_INIMIGOS')):
         i+=1
         Personagens[i].Posicao = GeraPosicaoAleatoria()
         Personagens[i].Escala = Ponto (1,1)
@@ -540,9 +530,13 @@ def CriaInstancias():
         Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
         Personagens[i].Velocidade = 1 # move-se a 5 m/s 
 
+        # Initialize shooting interval and last shot time
+        enemy_shoot_intervals[i] = random.uniform(1, 5)  # Random interval between 1 and 5 seconds
+        enemy_last_shot_time[i] = datetime.now()
+
         Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
 
-    while i < 30:
+    while i < 20 + (2*int(os.getenv('N_INIMIGOS'))):
         i+=1
         Personagens[i].Posicao = GeraPosicaoAleatoria()
         Personagens[i].Escala = Ponto (1,1)
@@ -554,9 +548,13 @@ def CriaInstancias():
         Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
         Personagens[i].Velocidade = 1 # move-se a 5 m/s 
 
+        # Initialize shooting interval and last shot time
+        enemy_shoot_intervals[i] = random.uniform(1, 5)  # Random interval between 1 and 5 seconds
+        enemy_last_shot_time[i] = datetime.now()
+
         Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
 
-    while i < 35:
+    while i < 20 + (3*int(os.getenv('N_INIMIGOS'))):
         i+=1
         Personagens[i].Posicao = GeraPosicaoAleatoria()
         Personagens[i].Escala = Ponto (1,1)
@@ -568,10 +566,50 @@ def CriaInstancias():
         Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
         Personagens[i].Velocidade = 1 # move-se a 5 m/s 
 
+        # Initialize shooting interval and last shot time
+        enemy_shoot_intervals[i] = random.uniform(1, 5)  # Random interval between 1 and 5 seconds
+        enemy_last_shot_time[i] = datetime.now()
+
         Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i])
 
+    nInstancias = i+1
 
-    nInstancias = 36
+
+    nInstancias = i+1
+
+eBullet = 10
+enemy_shoot_intervals = {}
+enemy_last_shot_time = {}
+def enemy_shoot():
+    global enemy_last_shot_time, enemy_shoot_intervals, eBullet
+    current_time = datetime.now()
+    
+    for i in range(21, nInstancias):
+        if (current_time - enemy_last_shot_time[i]).total_seconds() >= enemy_shoot_intervals[i]:
+            Personagens[eBullet].Posicao = Personagens[i].Posicao + (Personagens[i].Direcao * (Modelos[Personagens[i].IdDoModelo].nLinhas+0.1)) + Personagens[i].Pivot - Ponto(0.5,0)
+            Personagens[eBullet].Escala = Ponto (1,1)
+            Personagens[eBullet].Rotacao = copy.deepcopy(Personagens[i].Rotacao)
+            Personagens[eBullet].IdDoModelo = 1
+            Personagens[eBullet].Modelo = DesenhaPersonagemMatricial
+            Personagens[eBullet].Pivot = Ponto(0.5,0)
+            Personagens[eBullet].Direcao = copy.deepcopy(Personagens[i].Direcao) # direcao do movimento
+            Personagens[eBullet].Velocidade = 60  # move-se a 6 m/s
+
+            # Reset shooting timer
+            enemy_last_shot_time[i] = current_time
+            enemy_shoot_intervals[i] = random.uniform(1, 5)
+
+            if eBullet > 10:
+                eBullet = 1
+            else:
+                eBullet += 1
+
+enemies_killed = -9
+
+def drawText(position, textString):
+    glRasterPos2f(position[0], position[1])
+    for c in textString:
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, ord(c))
 
 
 # ***********************************************************************************
