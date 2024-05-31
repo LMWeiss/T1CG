@@ -316,7 +316,7 @@ def display():
 
     #glLineWidth(3)
     glColor3f(1,1,1) # R, G, B  [0..1]
-    DesenhaEixos()
+    #DesenhaEixos()
 
     DesenhaPersonagens()
     AtualizaPersonagens(DiferencaDeTempo)
@@ -331,15 +331,14 @@ def display():
 ESCAPE = b'\x1b'
 def keyboard(*args):
     global imprimeEnvelope
-    print (args)
     # If escape is pressed, kill everything.
-    if args[0] == b'q':
+    if args[0] == b'q' or args[0] == ESCAPE:
         os._exit(0)
-    if args[0] == ESCAPE:
-        os._exit(0)
-    if args[0] == b'e':
+    elif args[0] == b'e':
         imprimeEnvelope = True
-# Forca o redesenho da tela
+    elif args[0] == b' ':  # Spacebar pressed
+        shoot_bullet()
+    # Forca o redesenho da tela
     glutPostRedisplay()
 
 # **********************************************************************
@@ -349,11 +348,10 @@ def arrow_keys(a_keys: int, x: int, y: int):
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
         Personagens[0].AtualizaPosicao(1)
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        pass
+        Personagens[0].AtualizaPosicao(-1)
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         Personagens[0].Rotacao += 5
         Personagens[0].Direcao.rotacionaZ(+5)
-        
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
         Personagens[0].Rotacao -= 5
         Personagens[0].Direcao.rotacionaZ(-5)
@@ -445,7 +443,7 @@ def DesenhaPersonagemMatricial():
                 SetColor(cor)
                 DesenhaCelula()
                 SetColor(Wheat)
-                DesenhaBorda()
+                #DesenhaBorda()
             glTranslatef(1, 0, 0)
         glPopMatrix()
         glTranslatef(0, 1, 0)
@@ -456,6 +454,19 @@ def DesenhaPersonagemMatricial():
 # ***********************************************************************************
 # Esta função deve instanciar todos os personagens do cenário
 # ***********************************************************************************
+
+def shoot_bullet():
+    ang = 90
+    Personagens[1].Posicao = Personagens[0].PosicaoDoPersonagem + Ponto(Modelos[Personagens[0].IdDoModelo].nColunas * Personagens[0].Direcao.x , Modelos[Personagens[0].IdDoModelo].nLinhas * Personagens[0].Direcao.y)
+    Personagens[1].Escala = Ponto (1,1)
+    Personagens[1].Rotacao = copy.deepcopy(Personagens[0].Rotacao)
+    Personagens[1].IdDoModelo = 1
+    Personagens[1].Modelo = DesenhaPersonagemMatricial
+    Personagens[1].Pivot = Ponto(0.5,0)
+    Personagens[1].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
+    Personagens[1].Velocidade = 1   # move-se a 3 m/s
+    
+
 def CriaInstancias():
     global Personagens, nInstancias
 
@@ -475,19 +486,7 @@ def CriaInstancias():
     # Salva os dados iniciais do personagem i na area de backup
     Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i]) 
 
-    #Personagens[0].ImprimeEnvelope("Envelope:")
-
     i = i + 1
-    ang = 90
-    Personagens[i].Posicao = Ponto (13.5,0)
-    Personagens[i].Escala = Ponto (1,1)
-    Personagens[i].Rotacao = ang
-    Personagens[i].IdDoModelo = 1
-    Personagens[i].Modelo = DesenhaPersonagemMatricial
-    Personagens[i].Pivot = Ponto(0.5,0)
-    Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
-    Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
-    Personagens[i].Velocidade = 1   # move-se a 3 m/s
 
     # Salva os dados iniciais do personagem i na area de backup
     Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i]) 
@@ -529,7 +528,7 @@ def animate():
 glutInit(sys.argv)
 glutInitDisplayMode(GLUT_RGBA)
 # Define o tamanho inicial da janela grafica do programa
-glutInitWindowSize(1000, 1000)
+glutInitWindowSize(800, 800)
 glutInitWindowPosition(100, 100)
 wind = glutCreateWindow("Exemplo de Criacao de Instancias")
 glutDisplayFunc(display)
