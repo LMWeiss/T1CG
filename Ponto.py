@@ -23,6 +23,12 @@ class Ponto:
         else:
             print (self.x, self.y, self.z)
 
+    def getX(self):
+        return self.x
+    
+    def getY(self):
+        return self.y
+
     """ Define os valores dos eixos do ponto """
     def set(self, x, y, z=0):
         self.x = x
