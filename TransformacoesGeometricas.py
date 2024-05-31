@@ -198,6 +198,27 @@ def TestaColisao(P1, P2) -> bool :
                 return True
     return False
 
+def colideLimite(P1, size):
+    for i in range(4):
+        x = Personagens[P1].Envelope[i].getX()
+        y = Personagens[P1].Envelope[i].getY()
+        if x < -size:
+            Personagens[P1].Posicao = Ponto(size - 10, y)
+            return True
+        elif x > size:
+            Personagens[P1].Posicao = Ponto(-size + 5, y)
+            return True
+        elif y < -size:
+            Personagens[P1].Posicao = Ponto(x, size - 5)
+            return True
+        elif y > size:
+            Personagens[P1].Posicao = Ponto(x, -size + 5)
+            return True
+    return False
+            
+
+
+
 
 # ***********************************************************************************
 def AtualizaEnvelope(i):
@@ -263,6 +284,8 @@ def AtualizaJogo():
 
     # Feito o calculo, eh preciso testar todos os tiros e
     # demais personagens contra o jogador
+    colideLimite(0, LarguraDoUniverso)
+            
     for i in range (1, nInstancias):
         if TestaColisao(0, i):
             # neste exemplo, a posicao do tiro é gerada aleatoriamente apos a colisao
@@ -274,8 +297,9 @@ def AtualizaJogo():
             Personagens[i].Direcao = Ponto(0,1)
             Personagens[i].Direcao.rotacionaZ(ang)
             print ("Nova Orientacao: ", ang)
+        
+        
 
-       
         else:
             pass
             # print ("SEM Colisao")
@@ -454,17 +478,28 @@ def DesenhaPersonagemMatricial():
 # ***********************************************************************************
 # Esta função deve instanciar todos os personagens do cenário
 # ***********************************************************************************
+bulletN = 1
 
 def shoot_bullet():
+    global bulletN
     ang = 90
-    Personagens[1].Posicao = Personagens[0].PosicaoDoPersonagem + Ponto(Modelos[Personagens[0].IdDoModelo].nColunas * Personagens[0].Direcao.x , Modelos[Personagens[0].IdDoModelo].nLinhas * Personagens[0].Direcao.y)
-    Personagens[1].Escala = Ponto (1,1)
-    Personagens[1].Rotacao = copy.deepcopy(Personagens[0].Rotacao)
-    Personagens[1].IdDoModelo = 1
-    Personagens[1].Modelo = DesenhaPersonagemMatricial
-    Personagens[1].Pivot = Ponto(0.5,0)
-    Personagens[1].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
-    Personagens[1].Velocidade = 1   # move-se a 3 m/s
+    Personagens[bulletN].Posicao = Personagens[0].PosicaoDoPersonagem + Ponto(Modelos[Personagens[0].IdDoModelo].nColunas * Personagens[0].Direcao.x , Modelos[Personagens[0].IdDoModelo].nLinhas * Personagens[0].Direcao.y)
+    Personagens[bulletN].Rotacao = copy.deepcopy(Personagens[0].Posicao)
+    Personagens[bulletN].Escala = Ponto (1,1)
+    Personagens[bulletN].Rotacao = copy.deepcopy(Personagens[0].Rotacao)
+    Personagens[bulletN].IdDoModelo = 1
+    Personagens[bulletN].Modelo = DesenhaPersonagemMatricial
+    Personagens[bulletN].Pivot = Ponto(0.5,0)
+    Personagens[bulletN].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
+    Personagens[bulletN].Velocidade = 100   # move-se a 3 m/s
+
+    if bulletN > 20:
+        bulletN - 1
+        
+    else:
+        bulletN += 1
+
+    print(bulletN)
     
 
 def CriaInstancias():
@@ -481,7 +516,7 @@ def CriaInstancias():
     Personagens[i].Pivot = Ponto(8,0)
     Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
     Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
-    Personagens[i].Velocidade = 1 # move-se a 5 m/s
+    Personagens[i].Velocidade = 50 # move-se a 5 m/s
 
     # Salva os dados iniciais do personagem i na area de backup
     Personagens[i+AREA_DE_BACKUP] = copy.deepcopy(Personagens[i]) 
