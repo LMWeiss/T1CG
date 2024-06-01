@@ -27,6 +27,7 @@ from ModeloMatricial import *
 from ListaDeCoresRGB import *
 from datetime import datetime
 import time
+from datetime import timedelta
 import random
 from dotenv import load_dotenv
 
@@ -63,6 +64,8 @@ LarguraDoUniverso = 10.0
 TempoInicial = time.time()
 TempoTotal = time.time()
 TempoAnterior = time.time()
+
+load_dotenv()
 
 # define uma funcao de limpeza de tela
 from os import system, name
@@ -182,9 +185,6 @@ def TestaColisao(P1, P2) -> bool:
             C = Personagens[P2].Envelope[j]
             D = Personagens[P2].Envelope[(j + 1) % 4]
             if HaInterseccao(A, B, C, D):
-                if P2 > 20:  # Assuming enemies are indexed starting from 21
-                    global enemies_killed
-                    enemies_killed += 1
                 return True
     return False
 
@@ -209,7 +209,7 @@ def colideLimite(P1, size):
 
 # ***********************************************************************************
 def AtualizaEnvelope(i):
-    global Personagens
+    global Personagens, imprimeEnvelope
     id = Personagens[i].IdDoModelo
     MM = Modelos[id]
 
@@ -227,6 +227,7 @@ def AtualizaEnvelope(i):
     D = C + V
 
     # Desenha o envelope
+ 
     SetColor(Red)
     glBegin(GL_LINE_LOOP)
     glVertex2f(A.x, A.y)
@@ -234,6 +235,7 @@ def AtualizaEnvelope(i):
     glVertex2f(C.x, C.y)
     glVertex2f(D.x, D.y)
     glEnd()
+    
     # if (imprimeEnvelope):
     #     A.imprime("A:");
     #     B.imprime("B:");
@@ -250,11 +252,18 @@ def GeraPosicaoAleatoria():
     y = random.randint(-LarguraDoUniverso, LarguraDoUniverso)
     return Ponto(x, y)
 
+game_over = False
 
+recent_death = datetime.now()
+death_cd = 2
+
+initialize = datetime.now()
+
+lifes = 3
 
 # ***********************************************************************************
 def AtualizaJogo():
-    global imprimeEnvelope, nInstancias, Personagens
+    global imprimeEnvelope, nInstancias, Personagens, enemies_killed, lifes, game_over, recent_death, death_cd
     #  Esta funcao deverá atualizar todos os elementos do jogo
     #  em funcao das novas posicoes dos personagens
     #  Entre outras coisas, deve-se:
@@ -262,7 +271,8 @@ def AtualizaJogo():
     #   - calcular colisões
     #  Para calcular as colisoes eh preciso fazer o calculo do envelopes de
     #  todos os personagens
-
+    if lifes == 0:
+        game_over = True
     for i in range (0, nInstancias):
         AtualizaEnvelope(i) 
         if (imprimeEnvelope): # pressione E para alterar esta flag
@@ -274,12 +284,13 @@ def AtualizaJogo():
     # demais personagens contra o jogador
 
     for i in range(nInstancias):
-        if Personagens[i].IdDoModelo != 1:
+        if Personagens[i].IdDoModelo != 1 and Personagens[i].IdDoModelo != 5:
             colideLimite(i, LarguraDoUniverso)
 
-    for i in range (1, nInstancias):
-        if TestaColisao(0, i):
-            # neste exemplo, a posicao do tiro é gerada aleatoriamente apos a colisao
+    current_time = datetime.now()
+
+    for i in range (nInstancias):
+        if (current_time - initialize).total_seconds() <= 0.2 and Personagens[i].IdDoModelo in [2,3,4]:
             Personagens[i] = copy.deepcopy(Personagens[i+AREA_DE_BACKUP]) 
             Personagens[i].Posicao = GeraPosicaoAleatoria()
             Personagens[i].Posicao.imprime("Nova posicao:")
@@ -287,7 +298,33 @@ def AtualizaJogo():
             Personagens[i].Rotacao = ang
             Personagens[i].Direcao = Ponto(0,1)
             Personagens[i].Direcao.rotacionaZ(ang)
-            print ("Nova Orientacao: ", ang)        
+            print ("Nova Orientacao: ", ang)
+        for j in range(nInstancias):
+            if TestaColisao(0, i) and i != 0:
+                if (current_time - recent_death).total_seconds() >= death_cd:
+                    lifes-=1
+                    recent_death = current_time
+                    # neste exemplo, a posicao do tiro é gerada aleatoriamente apos a colisao
+                    Personagens[0] = copy.deepcopy(Personagens[0+AREA_DE_BACKUP]) 
+                    Personagens[0].Posicao = GeraPosicaoAleatoria()
+                    Personagens[0].Posicao.imprime("Nova posicao:")
+                    ang = random.randint(0, 360)
+                    Personagens[0].Rotacao = ang
+                    Personagens[0].Direcao = Ponto(0,1)
+                    Personagens[0].Direcao.rotacionaZ(ang)
+                    print ("Nova Orientacao: ", ang)
+            if Personagens[i].IdDoModelo in [2,3,4] and Personagens[j].IdDoModelo == 1:
+                if TestaColisao(i, j):
+                    enemies_killed+=1
+                    # neste exemplo, a posicao do tiro é gerada aleatoriamente apos a colisao
+                    Personagens[i] = copy.deepcopy(Personagens[i+AREA_DE_BACKUP]) 
+                    Personagens[i].Posicao = GeraPosicaoAleatoria()
+                    Personagens[i].Posicao.imprime("Nova posicao:")
+                    ang = random.randint(0, 360)
+                    Personagens[i].Rotacao = ang
+                    Personagens[i].Direcao = Ponto(0,1)
+                    Personagens[i].Direcao.rotacionaZ(ang)
+                    print ("Nova Orientacao: ", ang)
 
         else:
             pass
@@ -312,7 +349,7 @@ def DesenhaPersonagens():
         
 # ***********************************************************************************
 def display():
-    global TempoInicial, TempoTotal, TempoAnterior
+    global TempoInicial, TempoTotal, TempoAnterior, game_over, enemies_killed
 
     TempoAtual = time.time()
     TempoTotal = TempoAtual - TempoInicial
@@ -334,10 +371,39 @@ def display():
     glLoadIdentity()
     glColor3f(1, 1, 0)  # Red color for the counter
     drawText((-100, 100), f'Enemies killed: {enemies_killed}')
+    drawText((90, 100), f'Lifes: {lifes}')
     glPopMatrix()
 
     glutSwapBuffers()
     TempoAnterior = TempoAtual
+
+    if game_over:
+        # Render the "Game Over" message
+        glPushMatrix()
+        glLoadIdentity()
+        glColor3f(1, 0, 0)  # Red color for the text
+        drawText((-50, 0), "Game Over")
+        glPopMatrix()
+        glutSwapBuffers()
+        
+        # Add a delay before exiting
+        time.sleep(2)
+        os._exit(0)
+    
+    if enemies_killed >= int(os.getenv('ENEMIES_KILLED')):
+                # Render the "Game Over" message
+        glPushMatrix()
+        glLoadIdentity()
+        glColor3f(1, 1, 1)  # Red color for the text
+        drawText((-50, 0), "You win!")
+        glPopMatrix()
+        
+        glutSwapBuffers()
+        
+        # Add a delay before exiting
+        time.sleep(2)
+        os._exit(0)
+        
 
 # ***********************************************************************************
 # The function called whenever a key is pressed. 
@@ -349,9 +415,12 @@ def keyboard(*args):
     # If escape is pressed, kill everything.
     if args[0] == b'q' or args[0] == ESCAPE:
         os._exit(0)
-    elif args[0] == b'l':
-        imprimeEnvelope = True
-    elif args[0] == b'e':  # Spacebar pressed
+    elif args[0] == b'e':
+        if imprimeEnvelope == False:
+            imprimeEnvelope = True
+        if imprimeEnvelope == True:
+            imprimeEnvelope = False
+    elif args[0] == b' ':  # Spacebar pressed
         shoot_bullet()
     # Forca o redesenho da tela
     glutPostRedisplay()
@@ -361,9 +430,9 @@ def keyboard(*args):
 # **********************************************************************
 def arrow_keys(a_keys: int, x: int, y: int):
     if a_keys == GLUT_KEY_UP:         # Se pressionar UP
-        Personagens[0].AtualizaPosicao(1)
+        Personagens[0].AtualizaPosicao(0.05)
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
-        Personagens[0].AtualizaPosicao(-1)
+        pass
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
         Personagens[0].Rotacao += 10
         Personagens[0].Direcao.rotacionaZ(+10)
@@ -410,13 +479,15 @@ def CarregaModelos():
     Modelos.append(ModeloMatricial())
     Modelos[0].leModelo("Spaceship.txt")
     Modelos.append(ModeloMatricial())
-    Modelos[1].leModelo("MatrizProjetil.txt")
+    Modelos[1].leModelo("Projetil.txt")
     Modelos.append(ModeloMatricial())
     Modelos[2].leModelo("inimigo1.txt")
     Modelos.append(ModeloMatricial())
     Modelos[3].leModelo("inimigo2.txt")
     Modelos.append(ModeloMatricial())
     Modelos[4].leModelo("inimigo3.txt")
+    Modelos.append(ModeloMatricial())
+    Modelos[5].leModelo("ProjetilHostil.txt")
 
     print ("Modelo 0")
     Modelos[0].Imprime()
@@ -518,7 +589,7 @@ def enemy_shoot():
             Personagens[eBullet].Posicao = Personagens[i].Posicao + (Personagens[i].Direcao * (Modelos[Personagens[i].IdDoModelo].nLinhas+0.1)) + Personagens[i].Pivot - Ponto(0.5,0)
             Personagens[eBullet].Escala = Ponto (1,1)
             Personagens[eBullet].Rotacao = copy.deepcopy(Personagens[i].Rotacao)
-            Personagens[eBullet].IdDoModelo = 1
+            Personagens[eBullet].IdDoModelo = 5
             Personagens[eBullet].Modelo = DesenhaPersonagemMatricial
             Personagens[eBullet].Pivot = Ponto(0.5,0)
             Personagens[eBullet].Direcao = copy.deepcopy(Personagens[i].Direcao) # direcao do movimento
@@ -614,7 +685,7 @@ def CriaInstancias():
 
     nInstancias = i+1
 
-enemies_killed = -9
+enemies_killed = 0
 
 def drawText(position, textString):
     glRasterPos2f(position[0], position[1])
