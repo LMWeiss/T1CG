@@ -332,7 +332,7 @@ def display():
     # Render the enemies killed counter
     glPushMatrix()
     glLoadIdentity()
-    glColor3f(1, 0, 0)  # Red color for the counter
+    glColor3f(1, 1, 0)  # Red color for the counter
     drawText((-100, 100), f'Enemies killed: {enemies_killed}')
     glPopMatrix()
 
@@ -349,9 +349,9 @@ def keyboard(*args):
     # If escape is pressed, kill everything.
     if args[0] == b'q' or args[0] == ESCAPE:
         os._exit(0)
-    elif args[0] == b'e':
+    elif args[0] == b'l':
         imprimeEnvelope = True
-    elif args[0] == b' ':  # Spacebar pressed
+    elif args[0] == b'e':  # Spacebar pressed
         shoot_bullet()
     # Forca o redesenho da tela
     glutPostRedisplay()
@@ -365,11 +365,11 @@ def arrow_keys(a_keys: int, x: int, y: int):
     if a_keys == GLUT_KEY_DOWN:       # Se pressionar DOWN
         Personagens[0].AtualizaPosicao(-1)
     if a_keys == GLUT_KEY_LEFT:       # Se pressionar LEFT
-        Personagens[0].Rotacao += 5
-        Personagens[0].Direcao.rotacionaZ(+5)
+        Personagens[0].Rotacao += 10
+        Personagens[0].Direcao.rotacionaZ(+10)
     if a_keys == GLUT_KEY_RIGHT:      # Se pressionar RIGHT
-        Personagens[0].Rotacao -= 5
-        Personagens[0].Direcao.rotacionaZ(-5)
+        Personagens[0].Rotacao -= 10
+        Personagens[0].Direcao.rotacionaZ(-10)
 
     glutPostRedisplay()
 
@@ -408,7 +408,7 @@ def CarregaModelos():
     Mastro.LePontosDeArquivo("Mastro.txt")
 
     Modelos.append(ModeloMatricial())
-    Modelos[0].leModelo("MatrizExemplo0.txt")
+    Modelos[0].leModelo("Spaceship.txt")
     Modelos.append(ModeloMatricial())
     Modelos[1].leModelo("MatrizProjetil.txt")
     Modelos.append(ModeloMatricial())
@@ -481,20 +481,57 @@ bulletN = 1
 reload_start_time = 0
 is_reloading = False
 
+shoot_interval = 0.1
+last_shot = datetime.now()
+reload_time = 2
+last_reload = datetime.now()
+
 def shoot_bullet():
-    global bulletN
-    Personagens[bulletN].Posicao = Personagens[0].Posicao + (Personagens[0].Direcao * (Modelos[Personagens[0].IdDoModelo].nLinhas+0.1)) + Personagens[0].Pivot - Ponto(0.5,0)
-    Personagens[bulletN].Escala = Ponto (1,1)
-    Personagens[bulletN].Rotacao = copy.deepcopy(Personagens[0].Rotacao)
-    Personagens[bulletN].IdDoModelo = 1
-    Personagens[bulletN].Modelo = DesenhaPersonagemMatricial
-    Personagens[bulletN].Pivot = Ponto(0.5,0)
-    Personagens[bulletN].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
-    Personagens[bulletN].Velocidade = 60   # move-se a 3 m/s
-    if bulletN > 10:
-        bulletN = 1
-    else:
-        bulletN+=1
+    global bulletN, shoot_interval, last_shot, reload_time, last_reload
+    current_time = datetime.now()
+    if (current_time - last_shot).total_seconds() >= shoot_interval and (current_time - last_reload).total_seconds() >= reload_time:
+        Personagens[bulletN].Posicao = Personagens[0].Posicao + (Personagens[0].Direcao * (Modelos[Personagens[0].IdDoModelo].nLinhas+0.1)) + Personagens[0].Pivot - Ponto(0.5,0)
+        Personagens[bulletN].Escala = Ponto (1,1)
+        Personagens[bulletN].Rotacao = copy.deepcopy(Personagens[0].Rotacao)
+        Personagens[bulletN].IdDoModelo = 1
+        Personagens[bulletN].Modelo = DesenhaPersonagemMatricial
+        Personagens[bulletN].Pivot = Ponto(0.5,0)
+        Personagens[bulletN].Direcao = copy.deepcopy(Personagens[0].Direcao) # direcao do movimento para a cima
+        Personagens[bulletN].Velocidade = 120   # move-se a 3 m/s
+
+        last_shot = current_time
+        if bulletN > 10:
+            bulletN = 1
+            last_reload = current_time
+        else:
+            bulletN+=1
+
+eBullet = 10
+enemy_shoot_intervals = {}
+enemy_last_shot_time = {}
+def enemy_shoot():
+    global enemy_last_shot_time, enemy_shoot_intervals, eBullet
+    current_time = datetime.now()
+    
+    for i in range(21, nInstancias):
+        if (current_time - enemy_last_shot_time[i]).total_seconds() >= enemy_shoot_intervals[i]:
+            Personagens[eBullet].Posicao = Personagens[i].Posicao + (Personagens[i].Direcao * (Modelos[Personagens[i].IdDoModelo].nLinhas+0.1)) + Personagens[i].Pivot - Ponto(0.5,0)
+            Personagens[eBullet].Escala = Ponto (1,1)
+            Personagens[eBullet].Rotacao = copy.deepcopy(Personagens[i].Rotacao)
+            Personagens[eBullet].IdDoModelo = 1
+            Personagens[eBullet].Modelo = DesenhaPersonagemMatricial
+            Personagens[eBullet].Pivot = Ponto(0.5,0)
+            Personagens[eBullet].Direcao = copy.deepcopy(Personagens[i].Direcao) # direcao do movimento
+            Personagens[eBullet].Velocidade = 60  # move-se a 6 m/s
+
+            # Reset shooting timer
+            enemy_last_shot_time[i] = current_time
+            enemy_shoot_intervals[i] = random.uniform(1, 5)
+
+            if eBullet > 20:
+                eBullet = 10
+            else:
+                eBullet += 1
     
 
 def CriaInstancias():
@@ -525,7 +562,7 @@ def CriaInstancias():
         Personagens[i].Rotacao = ang
         Personagens[i].IdDoModelo = 2
         Personagens[i].Modelo = DesenhaPersonagemMatricial
-        Personagens[i].Pivot = Ponto(8,0)
+        Personagens[i].Pivot = Ponto(6,0)
         Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
         Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
         Personagens[i].Velocidade = 1 # move-se a 5 m/s 
@@ -543,7 +580,7 @@ def CriaInstancias():
         Personagens[i].Rotacao = ang
         Personagens[i].IdDoModelo = 3
         Personagens[i].Modelo = DesenhaPersonagemMatricial
-        Personagens[i].Pivot = Ponto(8,0)
+        Personagens[i].Pivot = Ponto(4,0)
         Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
         Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
         Personagens[i].Velocidade = 1 # move-se a 5 m/s 
@@ -561,7 +598,7 @@ def CriaInstancias():
         Personagens[i].Rotacao = ang
         Personagens[i].IdDoModelo = 4
         Personagens[i].Modelo = DesenhaPersonagemMatricial
-        Personagens[i].Pivot = Ponto(8,0)
+        Personagens[i].Pivot = Ponto(6,0)
         Personagens[i].Direcao = Ponto(0,1) # direcao do movimento para a cima
         Personagens[i].Direcao.rotacionaZ(ang) # direcao alterada para a direita
         Personagens[i].Velocidade = 1 # move-se a 5 m/s 
@@ -576,33 +613,6 @@ def CriaInstancias():
 
 
     nInstancias = i+1
-
-eBullet = 10
-enemy_shoot_intervals = {}
-enemy_last_shot_time = {}
-def enemy_shoot():
-    global enemy_last_shot_time, enemy_shoot_intervals, eBullet
-    current_time = datetime.now()
-    
-    for i in range(21, nInstancias):
-        if (current_time - enemy_last_shot_time[i]).total_seconds() >= enemy_shoot_intervals[i]:
-            Personagens[eBullet].Posicao = Personagens[i].Posicao + (Personagens[i].Direcao * (Modelos[Personagens[i].IdDoModelo].nLinhas+0.1)) + Personagens[i].Pivot - Ponto(0.5,0)
-            Personagens[eBullet].Escala = Ponto (1,1)
-            Personagens[eBullet].Rotacao = copy.deepcopy(Personagens[i].Rotacao)
-            Personagens[eBullet].IdDoModelo = 1
-            Personagens[eBullet].Modelo = DesenhaPersonagemMatricial
-            Personagens[eBullet].Pivot = Ponto(0.5,0)
-            Personagens[eBullet].Direcao = copy.deepcopy(Personagens[i].Direcao) # direcao do movimento
-            Personagens[eBullet].Velocidade = 60  # move-se a 6 m/s
-
-            # Reset shooting timer
-            enemy_last_shot_time[i] = current_time
-            enemy_shoot_intervals[i] = random.uniform(1, 5)
-
-            if eBullet > 10:
-                eBullet = 1
-            else:
-                eBullet += 1
 
 enemies_killed = -9
 
